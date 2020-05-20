@@ -394,7 +394,7 @@ void HMFossen::ApplyHydrodynamicForces(
   this->ComputeAddedCoriolisMatrix(velRel, this->Ma, this->Ca);
 
   // Update damping matrix
-  this->ComputeDampingMatrix(velRel, this->D);
+  // this->ComputeDampingMatrix(velRel, this->D);
 
   // Filter acceleration (see issue explanation above)
   this->ComputeAcc(velRel, _time, 0.3);
@@ -403,7 +403,8 @@ void HMFossen::ApplyHydrodynamicForces(
   // effects based on Eq. 8.136 on p.222 of Fossen: Handbook of Marine Craft ...
 
   // Damping forces and torques
-  Eigen::Vector6d damping = -this->D * velRel;
+  Eigen::Vector6d damping;
+  this->ComputeDamping(velRel, damping);
 
   // Added-mass forces and torques
   Eigen::Vector6d added = -this->GetAddedMass() * this->filteredAcc;
@@ -484,6 +485,58 @@ void HMFossen::ComputeDampingMatrix(const Eigen::Vector6d& _vel,
       std::fabs(_vel[i]);
   }
   _D *= this->scalingDamping;
+}
+
+/////////////////////////////////////////////////
+void HMFossen::ComputeDamping(const Eigen::Vector6d& _vel,
+                              Eigen::Vector6d &_damping) const
+{
+  double Xuu = -3.9, 
+         Yvv = -373.287, Yuv = -130.64, Yrr = -4.204, Yur = 40.25,
+         Zww = -489.07, Zuw = -522.87, Zqq = 23.016, Zuq = 4.27,
+         Kpp = -0.1177, 
+         Mww = 23.342, Muw = 140.68, Mqq = -353.406, Muq = 73,
+         Nvv = 0.4193, Nuv = -57.47, Nrr = -227.024, Nur = -50.3;
+
+  double u = _vel[0],
+         v = _vel[1],
+         w = _vel[2],
+         p = _vel[3],
+         q = _vel[4],
+         r = _vel[5];
+
+  double X = 0, 
+         Y = 0, 
+         Z = 0, 
+         K = 0, 
+         M = 0, 
+         N =0;
+
+  X = Xuu * u * std::fabs(u);
+  Y = Yvv * v * std::fabs(v) + 
+      Yuv * u * v + 
+      Yrr * r * std::fabs(r) + 
+      Yur * u * r;
+  Z = Zww * w * std::fabs(w) +
+      Zuw * u * w +
+      Zqq * q * std::fabs(q) +
+      Zuq * u * q;
+  K = Kpp * p * std::fabs(p);
+  M = Mww * w * std::fabs(w) +
+      Muw * u * w +
+      Mqq * q * std::fabs(q) +
+      Muq * u * q;
+  N = Nvv * v * std::fabs(v) +
+      Nuv * u * v +
+      Nrr * r * std::fabs(r) +
+      Nur * u * r;
+
+  _damping[0] = X;
+  _damping[1] = Y;
+  _damping[2] = Z;
+  _damping[3] = K;
+  _damping[4] = M;
+  _damping[5] = N;
 }
 
 /////////////////////////////////////////////////

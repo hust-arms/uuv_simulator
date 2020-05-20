@@ -194,6 +194,9 @@ class HMFossen : public HydrodynamicModel
   protected: void ComputeDampingMatrix(const Eigen::Vector6d& _vel,
                                        Eigen::Matrix6d &_D) const;
 
+  protected: void ComputeDamping(const Eigen::Vector6d& _vel,
+                                 Eigen::Vector6d &_damping) const;
+
   /// \brief Returns the added-mass matrix with the scaling and offset
   protected: Eigen::Matrix6d GetAddedMass() const;
 
