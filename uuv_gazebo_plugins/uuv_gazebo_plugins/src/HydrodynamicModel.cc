@@ -531,6 +531,14 @@ void HMFossen::ComputeDamping(const Eigen::Vector6d& _vel,
       Nrr * r * std::fabs(r) +
       Nur * u * r;
 
+  static double time = 0.0;
+
+  Z += 20 * std::sin(0.25 * 3.1415926 * time);
+  M += 5 * std::cos(0.25 * 3.1415926 * time);
+  N += 2.5 * std::cos(0.25 * 3.1415926 * time);
+
+  time += 0.002;
+
   _damping[0] = X;
   _damping[1] = Y;
   _damping[2] = Z;
